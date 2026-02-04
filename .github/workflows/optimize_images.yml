@@ -1,0 +1,36 @@
+name: Image Optimizer
+
+on:
+  push:
+    paths:
+      - '**.png'
+      - '**.jpg'
+      - '**.jpeg'
+  workflow_dispatch:
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y optipng jpegoptim
+
+      - name: Optimize PNGs
+        run: find . -name "*.png" -exec optipng -o2 -q {} \;
+
+      - name: Optimize JPGs
+        run: find . -name "*.jpg" -o -name "*.jpeg" -exec jpegoptim -m85 --strip-all {} \;
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-optimize images [skip ci]"
+          file_pattern: "*.png *.jpg *.jpeg"
