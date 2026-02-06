@@ -34,3 +34,4 @@ jobs:
         with:
           commit_message: "chore: auto-optimize images [skip ci]"
           file_pattern: "*.png *.jpg *.jpeg"
+          repository: .
