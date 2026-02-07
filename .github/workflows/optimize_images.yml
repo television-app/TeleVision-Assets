@@ -23,10 +23,14 @@ jobs:
       - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y optipng jpegoptim
+          sudo apt-get install -y optipng jpegoptim pngquant
 
-      - name: Optimize PNGs
-        run: find . -name "*.png" -exec optipng -o2 -q {} \;
+      - name: Optimize PNGs (Lossy + Lossless)
+        run: |
+          # Use pngquant for aggressive lossy compression
+          find . -name "*.png" -exec pngquant --ext .png --force --quality 65-80 {} \;
+          # Use optipng for final lossless layout optimization
+          find . -name "*.png" -exec optipng -o2 -q {} \;
 
       - name: Optimize JPGs
         run: find . -name "*.jpg" -o -name "*.jpeg" -exec jpegoptim -m85 --strip-all {} \;
