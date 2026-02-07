@@ -27,14 +27,23 @@ jobs:
 
       - name: Optimize PNGs (Resize + Lossy + Lossless)
         run: |
-          # 1. Resize to max 400px and strip metadata (Space-safe)
-          find . -name "*.png" -exec mogrify -resize "400x400>" -strip "{}" +
+          echo "Initial sizes:"
+          ls -lh *.png | head -n 10
           
-          # 2. Aggressive lossy compression (Targeting < 60KB)
-          find . -name "*.png" -exec pngquant --ext .png --force --quality 40-70 --speed 1 "{}" +
+          # 1. Resize and Strip
+          find . -name "*.png" -print0 | xargs -0 mogrify -resize "400x400>" -strip
+          echo "After resizing:"
+          ls -lh "Sangeet Bangla.png" || true
           
-          # 3. Final lossless structure optimization
-          find . -name "*.png" -exec optipng -o2 -q "{}" +
+          # 2. Aggressive Lossy Compression
+          find . -name "*.png" -print0 | xargs -0 pngquant --ext .png --force --quality 40-70 --speed 1
+          echo "After lossy compression:"
+          ls -lh "Sangeet Bangla.png" || true
+          
+          # 3. Final Lossless Optimization
+          find . -name "*.png" -print0 | xargs -0 optipng -o2 -q
+          echo "Final results:"
+          ls -lh *.png | head -n 10
 
       - name: Optimize JPGs
         run: find . -name "*.jpg" -o -name "*.jpeg" -exec jpegoptim -m85 --strip-all {} \;
