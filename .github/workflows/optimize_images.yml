@@ -23,18 +23,18 @@ jobs:
       - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y optipng jpegoptim pngquant
+          sudo apt-get install -y optipng jpegoptim pngquant imagemagick
 
       - name: Optimize PNGs (Resize + Lossy + Lossless)
         run: |
-          # 1. Resize to max 400px and strip metadata (Crucial to hit < 60KB)
-          find . -name "*.png" -exec mogrify -resize 400x400\> -strip {} \;
+          # 1. Resize to max 400px and strip metadata (Space-safe)
+          find . -name "*.png" -exec mogrify -resize "400x400>" -strip "{}" +
           
-          # 2. Aggressive lossy compression
-          find . -name "*.png" -exec pngquant --ext .png --force --quality 50-80 --speed 1 {} \;
+          # 2. Aggressive lossy compression (Targeting < 60KB)
+          find . -name "*.png" -exec pngquant --ext .png --force --quality 40-70 --speed 1 "{}" +
           
           # 3. Final lossless structure optimization
-          find . -name "*.png" -exec optipng -o2 -q {} \;
+          find . -name "*.png" -exec optipng -o2 -q "{}" +
 
       - name: Optimize JPGs
         run: find . -name "*.jpg" -o -name "*.jpeg" -exec jpegoptim -m85 --strip-all {} \;
