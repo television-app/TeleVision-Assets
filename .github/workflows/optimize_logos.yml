@@ -6,6 +6,7 @@ on:
       - '**'
       - '!scripts/**'
       - '!.github/**'
+  workflow_dispatch:
 
 jobs:
   optimize:
