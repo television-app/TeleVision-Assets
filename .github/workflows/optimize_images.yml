@@ -11,6 +11,8 @@ on:
 jobs:
   optimize:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout Repository
@@ -21,16 +23,28 @@ jobs:
       - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y optipng jpegoptim
+          sudo apt-get install -y optipng jpegoptim pngquant imagemagick
 
-      - name: Optimize PNGs
-        run: find . -name "*.png" -exec optipng -o2 -q {} \;
+      - name: Optimize PNGs (Resize + Lossy + Lossless)
+        run: |
+          # Use raw filenames and handle spaces correctly
+          find . -maxdepth 1 -name "*.png" -print0 | while IFS= read -r -d '' file; do
+            echo "--- Processing: $file ---"
+            mogrify -resize 300x -strip "$file"
+            pngquant --ext .png --force --quality 30-50 --speed 1 "$file" || echo "   pngquant skipped"
+            optipng -o1 "$file"
+          done
 
       - name: Optimize JPGs
         run: find . -name "*.jpg" -o -name "*.jpeg" -exec jpegoptim -m85 --strip-all {} \;
 
       - name: Commit and Push Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: auto-optimize images [skip ci]"
-          file_pattern: "*.png *.jpg *.jpeg"
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --quiet || ! git diff --staged --quiet; then
+            git commit -m "chore: auto-optimize images [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          fi
