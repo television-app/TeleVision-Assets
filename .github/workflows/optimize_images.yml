@@ -25,11 +25,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y optipng jpegoptim pngquant
 
-      - name: Optimize PNGs (Lossy + Lossless)
+      - name: Optimize PNGs (Resize + Lossy + Lossless)
         run: |
-          # Use pngquant for aggressive lossy compression
-          find . -name "*.png" -exec pngquant --ext .png --force --quality 65-80 {} \;
-          # Use optipng for final lossless layout optimization
+          # 1. Resize to max 400px and strip metadata (Crucial to hit < 60KB)
+          find . -name "*.png" -exec mogrify -resize 400x400\> -strip {} \;
+          
+          # 2. Aggressive lossy compression
+          find . -name "*.png" -exec pngquant --ext .png --force --quality 50-80 --speed 1 {} \;
+          
+          # 3. Final lossless structure optimization
           find . -name "*.png" -exec optipng -o2 -q {} \;
 
       - name: Optimize JPGs
