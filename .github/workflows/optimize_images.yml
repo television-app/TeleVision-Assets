@@ -26,33 +26,29 @@ jobs:
           sudo apt-get install -y optipng jpegoptim pngquant imagemagick
 
       - name: Optimize PNGs (Resize + Lossy + Lossless)
+        if: github.actor != 'github-actions[bot]'
         run: |
-          mogrify -version
-          pngquant --version
-          
-          # Use raw filenames and handle spaces correctly
-          find . -maxdepth 1 -name "*.png" -print0 | while IFS= read -r -d '' file; do
-            echo "--- Processing: $file ---"
-            # 1. Force resize to 300px width (even smaller to ensure < 60KB)
-            mogrify -resize 300x -strip "$file"
-            
-            # 2. Very Aggressive Lossy Compression
-            pngquant --ext .png --force --quality 30-50 --speed 1 "$file" || echo "   pngquant skipped for $file"
-            
-            # 3. Final Lossless Optimization
-            optipng -o2 -q "$file"
+          # Use convert (ImageMagick) to force resize
+          for f in *.png; do
+            [ -e "$f" ] || continue
+            echo "--- Processing: $f ---"
+            convert "$f" -resize 300x -strip "$f"
+            pngquant --ext .png --force --quality 30-50 --speed 1 "$file" || echo "   pngquant skipped"
+            optipng -o1 "$f"
           done
 
       - name: Optimize JPGs
+        if: github.actor != 'github-actions[bot]'
         run: find . -name "*.jpg" -o -name "*.jpeg" -exec jpegoptim -m85 --strip-all {} \;
 
       - name: Commit and Push Changes
+        if: github.actor != 'github-actions[bot]'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --quiet || ! git diff --staged --quiet; then
-            git commit -m "chore: auto-optimize images [skip ci]"
+            git commit -m "chore: auto-optimize images (bot)"
             git pull --rebase origin main
             git push origin main
           fi
