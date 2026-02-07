@@ -1,0 +1,36 @@
+name: Optimize Logos
+
+on:
+  push:
+    paths:
+      - '**'
+      - '!scripts/**'
+      - '!.github/**'
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: Optimize Images
+        run: |
+          python scripts/optimize_logos.py
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: optimize logo images to < 60KB"
+          file_pattern: '*.png *.jpg *.jpeg'
