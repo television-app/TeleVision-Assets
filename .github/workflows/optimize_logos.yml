@@ -1,0 +1,46 @@
+name: Auto Optimize Channel Logos to WebP
+
+on:
+  push:
+    paths:
+      - '*.png'
+      - '*.jpg'
+      - '*.jpeg'
+
+jobs:
+  optimize-logos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Pillow
+        run: pip install Pillow
+
+      - name: Convert & Compress Logos to WebP
+        run: |
+          python -c "
+          import os
+          from PIL import Image
+
+          for fname in os.listdir('.'):
+              if fname.lower().endswith(('.png', '.jpg', '.jpeg')) and not fname.startswith('.'):
+                  with Image.open(fname) as img:
+                      img_conv = img.convert('RGBA')
+                      if img_conv.width > 400 or img_conv.height > 400:
+                          img_conv.thumbnail((400, 400), Image.Resampling.LANCZOS)
+                      webp_name = os.path.splitext(fname)[0] + '.webp'
+                      img_conv.save(webp_name, 'WEBP', quality=85, method=6)
+                      img_conv.save(fname, 'PNG', optimize=True)
+          "
+
+      - name: Commit and Push Optimized WebP Images
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(auto): convert new channel logos to 85% compressed 400x400 WebP"
+          branch: main
